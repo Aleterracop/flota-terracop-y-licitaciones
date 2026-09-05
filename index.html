@@ -127,7 +127,7 @@
           📁 Cargar Nuevo Excel
         </button>
         <div id="last-update-display" style="font-size:10.5px; color:#94a3b8; font-weight:600; padding:6px 12px; background:rgba(255,255,255,0.05); border-radius:20px; border:1px solid rgba(255,255,255,0.1); white-space:nowrap;">
-          🕐 Sincronizando nube...
+          🕐 Sincronizando...
         </div>
         <div class="sync-status">
           <div class="sync-dot"></div>
@@ -190,9 +190,8 @@
   </div>
 
   <script>
-    // Usando tu X-Access-Key exacta y el ID de tu contenedor más nuevo
-    const JSONBIN_KEY = '$2a$10$hALQWkhTrKHYywUYI2A0LejUdUorPNdDBL7uZfFKehIzQPXE.4khq'; 
-    const JSONBIN_ID = '6a9c4255da38895dfe3d061c'; 
+    // URL pública y directa de npoint.io
+    const NPOINT_URL = 'https://api.npoint.io/f064c339d8755a8db526';
 
     let DATA_FLOTA = [];
 
@@ -290,30 +289,26 @@
       return newFlota;
     }
 
+    // Lectura pública instantánea desde npoint
     function syncCloudData() {
-      fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_ID + '/latest', {
-        headers: { 
-          'X-Master-Key': JSONBIN_KEY,
-          'X-Access-Key': JSONBIN_KEY 
-        }
-      })
+      fetch(NPOINT_URL)
       .then(res => res.json())
       .then(data => {
         let actualData = data.record !== undefined ? data.record : data;
         if (actualData && actualData.flota && actualData.flota.length > 0) {
           DATA_FLOTA = actualData.flota;
           initFlota();
-          setLastModifiedDisplay(new Date(), 'Sincronizado Nube:');
+          setLastModifiedDisplay(new Date(), 'Sincronizado Web:');
         } else {
           DATA_FLOTA = [{"item": 1, "cod": "BZ-268", "patente": "JTLJ-39", "tipo": "BULLDOZER", "modelo": "CAT D8T", "ubicacion": "FG COVER", "estado": "🔵 EN USO POR MANDANTE", "estado_cat": "EN OPERACIÓN", "mandante": "FG COVER", "f_entrada": "", "f_salida_comp": "", "cumplimiento": "", "alerta": "🔵 EN OPERACIÓN: FG COVER"}];
           initFlota();
-          document.getElementById('resultsCountFlota').textContent = '⚠️ Nube vacía. Carga tu Excel.';
+          document.getElementById('resultsCountFlota').textContent = '⚠️ Base vacía. Carga tu Excel.';
         }
       })
       .catch(err => {
         DATA_FLOTA = [{"item": 1, "cod": "BZ-268", "patente": "JTLJ-39", "tipo": "BULLDOZER", "modelo": "CAT D8T", "ubicacion": "FG COVER", "estado": "🔵 EN USO POR MANDANTE", "estado_cat": "EN OPERACIÓN", "mandante": "FG COVER", "f_entrada": "", "f_salida_comp": "", "cumplimiento": "", "alerta": "🔵 EN OPERACIÓN: FG COVER"}];
         initFlota();
-        document.getElementById('resultsCountFlota').textContent = '⚠️ Error conectando a la nube.';
+        document.getElementById('resultsCountFlota').textContent = '⚠️ Error conectando a la base pública.';
       });
     }
 
@@ -336,21 +331,20 @@
             initFlota();
             setLastModifiedDisplay(fileModDate, 'Actualizado:');
 
-            fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_ID, {
-              method: 'PUT',
+            // Envío directo por POST a npoint para actualizar la base pública para todos
+            fetch(NPOINT_URL, {
+              method: 'POST',
               headers: {
-                'Content-Type': 'application/json',
-                'X-Master-Key': JSONBIN_KEY,
-                'X-Access-Key': JSONBIN_KEY
+                'Content-Type': 'application/json'
               },
               body: JSON.stringify({ flota: parsedData })
             })
             .then(res => res.json())
             .then(result => {
-              alert("✅ ¡Datos guardados en la nube con tu Access Key para todo el equipo!");
+              alert("✅ ¡Datos subidos a la nube pública con éxito! Ya se puede ver desde cualquier celular o link compartido.");
             })
             .catch(err => {
-              alert("⚠️ Error al guardar en la nube.");
+              alert("⚠️ Los datos se cargaron en pantalla, pero hubo un detalle al actualizar en línea.");
             });
           }
         } catch (err) {
