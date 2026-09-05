@@ -190,7 +190,7 @@
   </div>
 
   <script>
-    const JSONBIN_KEY = '$2a$10$hALQWkhTrKHYywUYI2A0LejUdUorPNdDBL7uZfFKehIzQPXE.4khq'; 
+    const JSONBIN_KEY = '$2a$10$E2hMk1fL7nhwt7o7ek02teb9K/B5mC/JAf1e4wPlswQ6g.Fugi/D2'; 
     const JSONBIN_ID = '6a9c4255da38895dfe3d061c'; 
 
     let DATA_FLOTA = [];
@@ -347,7 +347,6 @@
             .then(res => res.json())
             .then(result => {
               alert("✅ ¡Datos guardados permanentemente en la nube para todo el equipo!");
-              // SE QUITÓ LA RECARGA FORZADA QUE BORRABA LOS DATOS
             })
             .catch(err => {
               alert("⚠️ Error al guardar en la nube.");
