@@ -190,10 +190,10 @@
 
   <script>
     // =========================================================================
-    // TUS CREDENCIALES DE JSONBIN CONFIGURADAS
+    // CONFIGURACIÓN DE JSONBIN (Tus datos reales ya integrados)
     // =========================================================================
     const JSONBIN_KEY = '$2a$10$hALQWkhTrKHYywUYI2A0LejUdUorPNdDBL7uZfFKehIzQPXE.4khq'; 
-    const JSONBIN_ID = ''; // <--- Déjalo vacío la primera vez.
+    const JSONBIN_ID = '6a9c3192f5f4af5e296e4d7f'; 
     // =========================================================================
 
     const GH_USER = 'Aleterracop';
@@ -297,23 +297,29 @@
       return newFlota;
     }
 
-    // Sincronizar con la nube JSONBin o GitHub
+    // Sincronizar automáticamente con tu contenedor de JSONBin al abrir
     function syncCloudData() {
-      if (JSONBIN_ID && !JSONBIN_ID.includes('TU_BIN')) {
+      if (JSONBIN_ID) {
         fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_ID + '/latest', {
           headers: { 'X-Master-Key': JSONBIN_KEY }
         })
         .then(res => res.json())
         .then(data => {
-          if (data && data.record && data.record.flota) {
+          if (data && data.record && data.record.flota && data.record.flota.length > 0) {
             DATA_FLOTA = data.record.flota;
             initFlota();
             setLastModifiedDisplay(new Date(), 'Sincronizado Nube:');
             return;
+          } else {
+            fallbackGitHubOrLocal();
           }
-        }).catch(err => console.log('Buscando en GitHub...'));
+        }).catch(err => fallbackGitHubOrLocal());
+      } else {
+        fallbackGitHubOrLocal();
       }
+    }
 
+    function fallbackGitHubOrLocal() {
       fetch(LIVE_EXCEL_URL + '?nocache=' + new Date().getTime())
         .then(res => {
           if (!res.ok) throw new Error('No disponible');
@@ -335,7 +341,7 @@
         });
     }
 
-    // Subir archivo y guardarlo automáticamente en JSONBin para todo el equipo
+    // Cargar nuevo Excel y guardarlo directamente en tu contenedor de JSONBin para todo el equipo
     function handleExcelUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -356,28 +362,22 @@
             setLastModifiedDisplay(fileModDate, 'Actualizado:');
 
             let requestOptions = {
-              method: JSONBIN_ID ? 'PUT' : 'POST',
+              method: 'PUT',
               headers: {
                 'Content-Type': 'application/json',
-                'X-Master-Key': JSONBIN_KEY,
-                ...(JSONBIN_ID ? {} : {'X-Bin-Name': 'Terracop_Flota'})
+                'X-Master-Key': JSONBIN_KEY
               },
               body: JSON.stringify({ flota: parsedData })
             };
-            let endpoint = JSONBIN_ID ? ('https://api.jsonbin.io/v3/b/' + JSONBIN_ID) : 'https://api.jsonbin.io/v3/b';
             
-            fetch(endpoint, requestOptions)
+            fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_ID, requestOptions)
               .then(res => res.json())
               .then(result => {
-                if (!JSONBIN_ID && result.metadata && result.metadata.id) {
-                  alert("💡 ¡PRIMERA VEZ! COPIA ESTE ID Y PÓNELO EN 'JSONBIN_ID' EN TU CÓDIGO HTML:\n\n" + result.metadata.id);
-                } else {
-                  alert("✅ ¡Datos subidos a la nube con éxito para todo el equipo!");
-                }
-              }).catch(err => alert("Error al subir a la nube."));
+                alert("✅ ¡Excel cargado y guardado en la nube con éxito para todo el equipo!");
+              }).catch(err => alert("⚠️ Datos cargados en pantalla, pero hubo un error al sincronizar con la nube."));
           }
         } catch (err) {
-          alert("Error al procesar el Excel.");
+          alert("Error al procesar el archivo Excel.");
         }
       };
       reader.readAsArrayBuffer(file);
@@ -579,7 +579,7 @@
           '</div>' +
           '<div style="display:flex; align-items:center; justify-content:space-between; padding-top:6px; border-top:1px dashed rgba(255,255,255,0.1);">' +
             '<span style="font-size:12px; color:var(--text-muted); font-weight:600;">Cumplimiento:</span>' +
-            '<span class="alert-tag ' + (esAtrasado ? 'alert-warn' : 'alert-ok') + '">' + textoCunn || textoCump + '</span>' +
+            '<span class="alert-tag ' + (esAtrasado ? 'alert-warn' : 'alert-ok') + '">' + textoCump + '</span>' +
           '</div>' +
         '</div>';
 
