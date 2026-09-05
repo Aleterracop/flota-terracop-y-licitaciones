@@ -288,10 +288,13 @@
       return newFlota;
     }
 
-    // Sincronización robusta con JSONBin
+    // LECTURA OBLIGATORIA CON API KEY (Soluciona el bloqueo en celulares y al refrescar)
     function syncCloudData() {
       fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_ID + '/latest', {
-        headers: { 'X-Master-Key': JSONBIN_KEY }
+        headers: { 
+          'X-Master-Key': JSONBIN_KEY,
+          'X-Access-Key': JSONBIN_KEY 
+        }
       })
       .then(res => res.json())
       .then(data => {
@@ -307,12 +310,13 @@
         }
       })
       .catch(err => {
+        DATA_FLOTA = [{"item": 1, "cod": "BZ-268", "patente": "JTLJ-39", "tipo": "BULLDOZER", "modelo": "CAT D8T", "ubicacion": "FG COVER", "estado": "🔵 EN USO POR MANDANTE", "estado_cat": "EN OPERACIÓN", "mandante": "FG COVER", "f_entrada": "", "f_salida_comp": "", "cumplimiento": "", "alerta": "🔵 EN OPERACIÓN: FG COVER"}];
         initFlota();
         document.getElementById('resultsCountFlota').textContent = '⚠️ Error conectando a la nube.';
       });
     }
 
-    // Guardado directo asegurando escritura en la raíz del Bin
+    // ESCRITURA BLINDADA CON DOBLE CABECERA DE SEGURIDAD
     function handleExcelUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -336,7 +340,8 @@
               method: 'PUT',
               headers: {
                 'Content-Type': 'application/json',
-                'X-Master-Key': JSONBIN_KEY
+                'X-Master-Key': JSONBIN_KEY,
+                'X-Access-Key': JSONBIN_KEY
               },
               body: JSON.stringify({ flota: parsedData })
             })
