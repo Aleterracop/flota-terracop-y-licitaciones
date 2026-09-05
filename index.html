@@ -347,8 +347,7 @@
             .then(res => res.json())
             .then(result => {
               alert("✅ ¡Datos guardados permanentemente en la nube para todo el equipo!");
-              // Forzar una recarga limpia para asegurar que lea del contenedor recién grabado
-              setTimeout(function() { syncCloudData(); }, 1000);
+              // SE QUITÓ LA RECARGA FORZADA QUE BORRABA LOS DATOS
             })
             .catch(err => {
               alert("⚠️ Error al guardar en la nube.");
