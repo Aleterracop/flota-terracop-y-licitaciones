@@ -288,7 +288,6 @@
       return newFlota;
     }
 
-    // LECTURA OBLIGATORIA CON API KEY (Soluciona el bloqueo en celulares y al refrescar)
     function syncCloudData() {
       fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_ID + '/latest', {
         headers: { 
@@ -316,7 +315,6 @@
       });
     }
 
-    // ESCRITURA BLINDADA CON DOBLE CABECERA DE SEGURIDAD
     function handleExcelUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
