@@ -288,29 +288,31 @@
       return newFlota;
     }
 
-    // Cargar datos reales desde JSONBin al abrir la página
+    // Sincronización robusta con JSONBin
     function syncCloudData() {
       fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_ID + '/latest', {
         headers: { 'X-Master-Key': JSONBIN_KEY }
       })
       .then(res => res.json())
       .then(data => {
-        // JSONBin envuelve los registros dentro de 'record'
-        let actualData = data.record || data;
+        let actualData = data.record !== undefined ? data.record : data;
         if (actualData && actualData.flota && actualData.flota.length > 0) {
           DATA_FLOTA = actualData.flota;
           initFlota();
           setLastModifiedDisplay(new Date(), 'Sincronizado Nube:');
         } else {
-          document.getElementById('resultsCountFlota').textContent = '⚠️ Sin datos en la nube. Sube un Excel.';
+          DATA_FLOTA = [{"item": 1, "cod": "BZ-268", "patente": "JTLJ-39", "tipo": "BULLDOZER", "modelo": "CAT D8T", "ubicacion": "FG COVER", "estado": "🔵 EN USO POR MANDANTE", "estado_cat": "EN OPERACIÓN", "mandante": "FG COVER", "f_entrada": "", "f_salida_comp": "", "cumplimiento": "", "alerta": "🔵 EN OPERACIÓN: FG COVER"}];
+          initFlota();
+          document.getElementById('resultsCountFlota').textContent = '⚠️ Nube vacía. Carga tu Excel.';
         }
       })
       .catch(err => {
-        document.getElementById('resultsCountFlota').textContent = '⚠️ Error de conexión con la nube.';
+        initFlota();
+        document.getElementById('resultsCountFlota').textContent = '⚠️ Error conectando a la nube.';
       });
     }
 
-    // Guardar en JSONBin correctamente con la estructura de objeto
+    // Guardado directo asegurando escritura en la raíz del Bin
     function handleExcelUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -330,7 +332,6 @@
             initFlota();
             setLastModifiedDisplay(fileModDate, 'Actualizado:');
 
-            // Envía los datos asegurando que van dentro de la propiedad "flota"
             fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_ID, {
               method: 'PUT',
               headers: {
@@ -341,7 +342,7 @@
             })
             .then(res => res.json())
             .then(result => {
-              alert("✅ ¡Datos guardados y sincronizados en la nube correctamente para todo el equipo!");
+              alert("✅ ¡Datos guardados permanentemente en la nube para todo el equipo!");
             })
             .catch(err => {
               alert("⚠️ Error al guardar en la nube.");
