@@ -191,7 +191,7 @@
 
   <script>
     const JSONBIN_KEY = '$2a$10$hALQWkhTrKHYywUYI2A0LejUdUorPNdDBL7uZfFKehIzQPXE.4khq'; 
-    const JSONBIN_ID = 'TU_NUEVO_ID_AQUI'; // <--- PEGA TU NUEVO ID DE JSONBIN AQUÍ ENTRE LAS COMILLAS
+    const JSONBIN_ID = '6a9c4255da38895dfe3d061c'; 
 
     let DATA_FLOTA = [];
 
@@ -347,6 +347,8 @@
             .then(res => res.json())
             .then(result => {
               alert("✅ ¡Datos guardados permanentemente en la nube para todo el equipo!");
+              // Forzar una recarga limpia para asegurar que lea del contenedor recién grabado
+              setTimeout(function() { syncCloudData(); }, 1000);
             })
             .catch(err => {
               alert("⚠️ Error al guardar en la nube.");
