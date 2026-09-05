@@ -189,19 +189,10 @@
   </div>
 
   <script>
-    // =========================================================================
-    // CONFIGURACIÓN DE JSONBIN (Tus datos reales ya integrados)
-    // =========================================================================
     const JSONBIN_KEY = '$2a$10$hALQWkhTrKHYywUYI2A0LejUdUorPNdDBL7uZfFKehIzQPXE.4khq'; 
     const JSONBIN_ID = '6a9c3192f5f4af5e296e4d7f'; 
-    // =========================================================================
 
-    const GH_USER = 'Aleterracop';
-    const GH_REPO = 'flota-terracop-y-licitas';
-    const GH_FILE_PATH = 'flota.xlsx';
-    const LIVE_EXCEL_URL = 'https://raw.githubusercontent.com/' + GH_USER + '/' + GH_REPO + '/main/' + encodeURIComponent(GH_FILE_PATH);
-
-    let DATA_FLOTA = [{"item": 1, "cod": "BZ-268", "patente": "JTLJ-39", "tipo": "BULLDOZER", "modelo": "CAT D8T", "ubicacion": "FG COVER", "estado": "🔵 EN USO POR MANDANTE", "estado_cat": "EN OPERACIÓN", "mandante": "FG COVER", "f_entrada": "", "f_salida_comp": "", "cumplimiento": "", "alerta": "🔵 EN OPERACIÓN: FG COVER"}];
+    let DATA_FLOTA = [];
 
     function parseDateObj(val) {
       if (!val && val !== 0) return null;
@@ -297,51 +288,29 @@
       return newFlota;
     }
 
-    // Sincronizar automáticamente con tu contenedor de JSONBin al abrir
+    // Cargar datos reales desde JSONBin al abrir la página
     function syncCloudData() {
-      if (JSONBIN_ID) {
-        fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_ID + '/latest', {
-          headers: { 'X-Master-Key': JSONBIN_KEY }
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.record && data.record.flota && data.record.flota.length > 0) {
-            DATA_FLOTA = data.record.flota;
-            initFlota();
-            setLastModifiedDisplay(new Date(), 'Sincronizado Nube:');
-            return;
-          } else {
-            fallbackGitHubOrLocal();
-          }
-        }).catch(err => fallbackGitHubOrLocal());
-      } else {
-        fallbackGitHubOrLocal();
-      }
-    }
-
-    function fallbackGitHubOrLocal() {
-      fetch(LIVE_EXCEL_URL + '?nocache=' + new Date().getTime())
-        .then(res => {
-          if (!res.ok) throw new Error('No disponible');
-          var lastMod = res.headers.get('Last-Modified');
-          var d = lastMod ? new Date(lastMod) : new Date();
-          return res.arrayBuffer().then(buf => ({ buffer: buf, date: d }));
-        })
-        .then(resData => {
-          const workbook = XLSX.read(new Uint8Array(resData.buffer), { type: 'array' });
-          const sheetFlota = workbook.SheetNames.find(s => s.toLowerCase().includes('flota') || s.toLowerCase().includes('taller')) || workbook.SheetNames[2] || workbook.SheetNames[0];
-          if (sheetFlota) {
-            DATA_FLOTA = parseAndLoadSheet(workbook.Sheets[sheetFlota]);
-            initFlota();
-            setLastModifiedDisplay(resData.date, 'Sincronizado GitHub:');
-          }
-        })
-        .catch(e => {
+      fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_ID + '/latest', {
+        headers: { 'X-Master-Key': JSONBIN_KEY }
+      })
+      .then(res => res.json())
+      .then(data => {
+        // JSONBin envuelve los registros dentro de 'record'
+        let actualData = data.record || data;
+        if (actualData && actualData.flota && actualData.flota.length > 0) {
+          DATA_FLOTA = actualData.flota;
           initFlota();
-        });
+          setLastModifiedDisplay(new Date(), 'Sincronizado Nube:');
+        } else {
+          document.getElementById('resultsCountFlota').textContent = '⚠️ Sin datos en la nube. Sube un Excel.';
+        }
+      })
+      .catch(err => {
+        document.getElementById('resultsCountFlota').textContent = '⚠️ Error de conexión con la nube.';
+      });
     }
 
-    // Cargar nuevo Excel y guardarlo directamente en tu contenedor de JSONBin para todo el equipo
+    // Guardar en JSONBin correctamente con la estructura de objeto
     function handleExcelUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -361,20 +330,22 @@
             initFlota();
             setLastModifiedDisplay(fileModDate, 'Actualizado:');
 
-            let requestOptions = {
+            // Envía los datos asegurando que van dentro de la propiedad "flota"
+            fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_ID, {
               method: 'PUT',
               headers: {
                 'Content-Type': 'application/json',
                 'X-Master-Key': JSONBIN_KEY
               },
               body: JSON.stringify({ flota: parsedData })
-            };
-            
-            fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_ID, requestOptions)
-              .then(res => res.json())
-              .then(result => {
-                alert("✅ ¡Excel cargado y guardado en la nube con éxito para todo el equipo!");
-              }).catch(err => alert("⚠️ Datos cargados en pantalla, pero hubo un error al sincronizar con la nube."));
+            })
+            .then(res => res.json())
+            .then(result => {
+              alert("✅ ¡Datos guardados y sincronizados en la nube correctamente para todo el equipo!");
+            })
+            .catch(err => {
+              alert("⚠️ Error al guardar en la nube.");
+            });
           }
         } catch (err) {
           alert("Error al procesar el archivo Excel.");
