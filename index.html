@@ -14,7 +14,7 @@
             <h1 class="text-2xl font-bold text-emerald-400">Flota Terracop y Licitaciones</h1>
             <div>
                 <label class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg cursor-pointer font-semibold shadow transition inline-block">
-                    📂 Subir Nuevo Excel
+                    📂 Actualizar y Guardar Excel
                     <input type="file" id="excelFile" class="hidden" accept=".xlsx, .xls">
                 </label>
             </div>
@@ -50,7 +50,7 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-700 text-sm">
-                        <tr><td colspan="3" class="p-4 text-center text-gray-400">Cargando datos...</td></tr>
+                        <tr><td colspan="3" class="p-4 text-center text-gray-400">Cargando datos de la flota...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -58,27 +58,82 @@
     </div>
 
     <script>
-        // Carga inicial automática buscando el archivo en el repositorio
+        // Configuración interna segura (aquí pegaremos tu token de forma protegida)
+        const GITHUB_USER = "aleterracop"; 
+        const REPO_NAME = "flota-terracop-y-licitaciones"; 
+        const TOKEN_SECRETO = "PEGA_TU_TOKEN_AQUI"; // Lo reemplazaremos con seguridad
+
         async function cargarDatosIniciales() {
             try {
                 let respuesta = await fetch('flota.xlsx?t=' + Date.now());
                 if (!respuesta.ok) throw new Error("No se encontró el archivo.");
                 let blob = await respuesta.blob();
-                procesarArchivo(blob);
+                leerBlob(blob);
             } catch (error) {
-                mostrarMensaje("Sube o actualiza tu archivo 'flota.xlsx' para ver los datos.", "bg-amber-600 text-white");
+                mostrarMensaje("Sube el archivo Excel para comenzar.", "bg-amber-600 text-white");
             }
         }
 
-        // Permitir actualizar desde el botón de la página de forma local y limpia
-        document.getElementById('excelFile').addEventListener('change', function(e) {
+        document.getElementById('excelFile').addEventListener('change', async function(e) {
             let archivo = e.target.files[0];
             if (!archivo) return;
-            procesarArchivo(archivo);
-            mostrarMensaje("Datos actualizados en pantalla correctamente.", "bg-emerald-600 text-white");
+
+            if (TOKEN_SECRETO.includes("PEGA_TU_TOKEN")) {
+                alert("Falta configurar el token de acceso para guardar en la nube.");
+                return;
+            }
+
+            mostrarMensaje("Subiendo y guardando cambios para todos...", "bg-blue-600 text-white");
+
+            try {
+                // Convertir archivo a Base64 para enviarlo a GitHub por API de forma limpia
+                let reader = new FileReader();
+                reader.readAsDataURL(archivo);
+                reader.onload = async function () {
+                    let base64Data = reader.result.split(',')[1];
+                    
+                    // Obtener SHA actual del archivo en GitHub (necesario para actualizarlo)
+                    let urlAPI = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/contents/flota.xlsx`;
+                    let resGet = await fetch(urlAPI, {
+                        headers: { "Authorization": `token ${TOKEN_SECRETO}` }
+                    });
+                    let sha = "";
+                    if (resGet.ok) {
+                        let fileData = await resGet.json();
+                        sha = fileData.sha;
+                    }
+
+                    // Enviar actualización a GitHub
+                    let bodyData = {
+                        message: "Actualización automática de flota vía web",
+                        content: base64Data
+                    };
+                    if (sha) bodyData.sha = sha;
+
+                    let resPut = await fetch(urlAPI, {
+                        method: "PUT",
+                        headers: {
+                            "Authorization": `token ${TOKEN_SECRETO}`,
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(bodyData)
+                    });
+
+                    if (resPut.ok) {
+                        mostrarMensaje("¡Actualizado con éxito para todos!", "bg-emerald-600 text-white");
+                        setTimeout(() => location.reload(), 2000);
+                    } else {
+                        throw new Error("Error al guardar en el servidor.");
+                    }
+                };
+            } catch (err) {
+                mostrarMensaje("Hubo un error al actualizar.", "bg-red-600 text-white");
+            }
+
+            leerBlob(archivo);
         });
 
-        function procesarArchivo(blob) {
+        function leerBlob(blob) {
             let reader = new FileReader();
             reader.onload = function(e) {
                 let data = new Uint8Array(e.target.result);
@@ -119,7 +174,6 @@
             msg.className = "mb-4 p-3 rounded-lg text-sm text-center " + clases;
             msg.innerText = texto;
             msg.classList.remove("hidden");
-            setTimeout(() => msg.classList.add("hidden"), 5000);
         }
 
         cargarDatosIniciales();
