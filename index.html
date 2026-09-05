@@ -127,7 +127,7 @@
           📁 Cargar Nuevo Excel
         </button>
         <div id="last-update-display" style="font-size:10.5px; color:#94a3b8; font-weight:600; padding:6px 12px; background:rgba(255,255,255,0.05); border-radius:20px; border:1px solid rgba(255,255,255,0.1); white-space:nowrap;">
-          🕐 Sincronizando...
+          🕐 Sincronizando nube...
         </div>
         <div class="sync-status">
           <div class="sync-dot"></div>
@@ -190,7 +190,8 @@
   </div>
 
   <script>
-    const JSONBIN_KEY = '$2a$10$E2hMk1fL7nhwt7o7ek02teb9K/B5mC/JAf1e4wPlswQ6g.Fugi/D2'; 
+    // Usando tu X-Access-Key exacta y el ID de tu contenedor más nuevo
+    const JSONBIN_KEY = '$2a$10$hALQWkhTrKHYywUYI2A0LejUdUorPNdDBL7uZfFKehIzQPXE.4khq'; 
     const JSONBIN_ID = '6a9c4255da38895dfe3d061c'; 
 
     let DATA_FLOTA = [];
@@ -346,7 +347,7 @@
             })
             .then(res => res.json())
             .then(result => {
-              alert("✅ ¡Datos guardados permanentemente en la nube para todo el equipo!");
+              alert("✅ ¡Datos guardados en la nube con tu Access Key para todo el equipo!");
             })
             .catch(err => {
               alert("⚠️ Error al guardar en la nube.");
